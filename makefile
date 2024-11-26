@@ -1,4 +1,7 @@
-all: myshell looper
+all: myshell looper mypipe
+
+mypipe: mypipe.o
+	gcc -m32 -g -o mypipe mypipe.o
 
 myshell: myshell.o LineParser.o
 	gcc -m32 -g -Wall -o myshell myshell.o LineParser.o
@@ -16,4 +19,4 @@ looper.o: looper.c
 	gcc -m32 -g -Wall -c looper.c
 
 clean:
-	rm -f *.o myshell looper
+	rm -f *.o myshell looper mypipe

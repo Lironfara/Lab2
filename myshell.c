@@ -13,9 +13,14 @@
 
 #define MAX_LENGTH 2048
 #define MAX_PATH_SIZE 4096
+char input[MAX_LENGTH]; //string is array of chars
+bool debug = true;
+
 //for reading string - array of chars:
 
 void execute(cmdLine *pCmdLine){
+
+    //all terms
 
         if (strcmp (pCmdLine->arguments[0], "stop") == 0){
             int childPID = atoi(pCmdLine->arguments[1]);
@@ -53,9 +58,10 @@ void execute(cmdLine *pCmdLine){
             }
             freeCmdLines(pCmdLine);
         }
+    //end of terms
 
         else{
-            int PID = fork(); //maintian shell alive
+            int PID = fork();
             if (PID == -1){
             perror("Frok failed");
             freeCmdLines(pCmdLine);
@@ -63,6 +69,23 @@ void execute(cmdLine *pCmdLine){
             }
 
             else if (PID == 0){ //child process
+            //adding files:
+            if (pCmdLine->inputRedirect != NULL){
+                if (fopen(pCmdLine->inputRedirect, "r") == NULL){
+                    perror("Fail to open input file");
+                    freeCmdLines(pCmdLine);
+                    _exit(1);
+                }
+            }
+
+            if (pCmdLine->outputRedirect != NULL){
+                if (fopen(pCmdLine->outputRedirect, "w") == NULL){
+                    perror("Fail to open output file");
+                    freeCmdLines(pCmdLine);
+                    _exit(1);
+                }
+            }
+
             if (execvp(pCmdLine->arguments[0], pCmdLine->arguments) == -1){ //trying to run
             perror("Error in execvp");
             freeCmdLines(pCmdLine);
@@ -87,8 +110,6 @@ void execute(cmdLine *pCmdLine){
 
 int main(int argc, char **argv){
 
-    bool debug = true;
-
     cmdLine *parsedLine;
 
     if (argc>1 && strcmp(argv[1], "-d") == 0){
@@ -97,6 +118,12 @@ int main(int argc, char **argv){
     
 
     while (1){ //for infinte loop
+
+        if (debug){
+            fprintf(stderr, "PID: %d\n", getpid());
+            fprintf(stderr, "Executing command: %s", input);
+        }
+
         char current_dir[MAX_PATH_SIZE]; 
         if (getcwd(current_dir, MAX_PATH_SIZE) == NULL){
             perror("Fail in getcwd");
@@ -106,14 +133,10 @@ int main(int argc, char **argv){
     
 
         fprintf(stdout, "%s>", current_dir); //print the current directory using prompt symbol
-        char input[MAX_LENGTH]; //string is array of chars
 
         fgets(input, MAX_LENGTH, stdin); //reading from stdin to line - max length is 2048
 
-        if (debug){
-            fprintf(stderr, "PID: %d\n", getpid());
-            fprintf(stderr, "Executing command: %s", input);
-        }
+      
 
 
         if (strcmp (input,  "quit\n") == 0 ){
