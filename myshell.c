@@ -23,7 +23,7 @@ void execute(cmdLine *pCmdLine){
     //all terms
 
         if (strcmp (pCmdLine->arguments[0], "stop") == 0){
-            int childPID = atoi(pCmdLine->arguments[1]);
+            int childPID = atoi(pCmdLine->arguments[1]); //converting string to int
             if (kill(childPID, SIGSTOP) == -1){
                 perror("Fail to stop process");
             }
@@ -92,10 +92,10 @@ void execute(cmdLine *pCmdLine){
             _exit(1); //to 'kill' the child :(
             }
         }
-            else{ //the parent
+            else{ //I am the father - getting back my child ID
                 if (pCmdLine->blocking ==1) {
                 int status = 0;
-                waitpid(PID, &status, 0);
+                waitpid(PID, &status, 0); //waiting for the childPID to finish
                 }
 
                 }
