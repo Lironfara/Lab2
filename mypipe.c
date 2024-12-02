@@ -25,9 +25,12 @@ int main(){
 
     else if (PID == 0){ //for child
         write(pipefd[1], "hello", strlen("hello"));
+        close(pipefd[1]);   
     }
 
     else{ //for parent
         read(pipefd[0], buffer, MAX_LENGTH);
+        close(pipefd[0]);
+         printf("Parent received: %s\n", buffer);
     }
 }

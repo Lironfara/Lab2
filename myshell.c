@@ -14,7 +14,7 @@
 #define MAX_LENGTH 2048
 #define MAX_PATH_SIZE 4096
 char input[MAX_LENGTH]; //string is array of chars
-bool debug = true;
+bool debug = false;
 
 //for reading string - array of chars:
 
@@ -52,7 +52,9 @@ void execute(cmdLine *pCmdLine){
             }
         }
 
-        else if (strcmp (pCmdLine->arguments[0], "cd") == 0){
+        else if (strcmp (pCmdLine->arguments[0],"cd") == 0){
+            printf("Changing directory to: ");
+            printf("%s ", pCmdLine->arguments[1]);
             if (chdir(pCmdLine->arguments[1]) == -1){ //trying yto change directory of the shell
                 perror("Fail in chdir");
             }
@@ -71,19 +73,22 @@ void execute(cmdLine *pCmdLine){
             else if (PID == 0){ //child process
             //adding files:
             if (pCmdLine->inputRedirect != NULL){
+                printf("Input file: %s\n", pCmdLine->inputRedirect);
                 if (fopen(pCmdLine->inputRedirect, "r") == NULL){
                     perror("Fail to open input file");
-                    freeCmdLines(pCmdLine);
                     _exit(1);
                 }
             }
 
             if (pCmdLine->outputRedirect != NULL){
-                if (fopen(pCmdLine->outputRedirect, "w") == NULL){
+                printf("Output file: %s\n", pCmdLine->outputRedirect);
+                FILE *outputFile = fopen(pCmdLine->outputRedirect, "w");
+                if (outputFile == NULL){
                     perror("Fail to open output file");
-                    freeCmdLines(pCmdLine);
                     _exit(1);
                 }
+                dup2(fileno(outputFile), STDOUT_FILENO); //to write to the file
+                fclose(outputFile);
             }
 
             if (execvp(pCmdLine->arguments[0], pCmdLine->arguments) == -1){ //trying to run
@@ -113,7 +118,7 @@ int main(int argc, char **argv){
     cmdLine *parsedLine;
 
     if (argc>1 && strcmp(argv[1], "-d") == 0){
-        debug = false;
+        debug = true;
     }
     
 
@@ -147,6 +152,7 @@ int main(int argc, char **argv){
         
 
         execute(parsedLine); 
-        freeCmdLines(parsedLine); 
     }
+    freeCmdLines(parsedLine); 
+
 }
