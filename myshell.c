@@ -17,48 +17,86 @@ char input[MAX_LENGTH]; //string is array of chars
 bool debug = false;
 
 //for reading string - array of chars:
+int getChildPID(cmdLine *pCmdLine){
+    return atoi(pCmdLine->arguments[1]);
+}
+
+void handleStop(cmdLine *pCmdLine){
+    if (pCmdLine->argCount < 2){
+        perror("Fail to stop process");
+        return;
+    }
+    int childPID = getChildPID(pCmdLine);
+    if (kill(childPID, SIGSTOP) == -1){
+        perror("Fail to stop process");
+    }
+    else {
+        fprintf(stdout, "Process %d was stopped\n", childPID);
+    }
+}
+
+void handleTerm(cmdLine *pCmdLine){
+    if (pCmdLine->argCount < 2){
+        perror("Fail to terminate process");
+        return;
+    }
+    int childPID = getChildPID(pCmdLine);
+    if (kill(childPID, SIGTERM) == -1){
+        perror("Fail to terminate process");
+    }
+    else {
+        fprintf(stdout, "Process %d was terminated\n", childPID);
+    }
+
+}
+
+void handleWake(cmdLine *pCmdLine){
+    if (pCmdLine->argCount < 2){
+        perror("Fail to wake process");
+        return;
+    }
+    int childPID = getChildPID(pCmdLine);
+    if (kill(childPID, SIGCONT) == -1){
+        perror("Fail to wake process");
+    }
+    else {
+        fprintf(stdout, "Process %d was woken\n", childPID);
+    }
+} 
+
+void handleCD(cmdLine *pCmdLine){
+    if (pCmdLine->argCount < 2){
+        perror("Fail to change directory");
+        return;
+    }
+    if (chdir(pCmdLine->arguments[1]) == -1){
+        perror("Fail to change directory");
+    }
+    else {
+        fprintf(stdout, "Directory was changed\n");
+    }
+     freeCmdLines(pCmdLine);
+
+}
+
 
 void execute(cmdLine *pCmdLine){
 
-    //all terms
-
+    // terms
         if (strcmp (pCmdLine->arguments[0], "stop") == 0){
-            int childPID = atoi(pCmdLine->arguments[1]); //converting string to int
-            if (kill(childPID, SIGSTOP) == -1){
-                perror("Fail to stop process");
-            }
-            else {
-                fprintf(stdout, "Process %d was stopped\n", childPID);
-            }
+            handleStop(pCmdLine);
         }
 
          else if (strcmp (pCmdLine->arguments[0],"wake") == 0){
-            int childPID = atoi(pCmdLine->arguments[1]);
-            if (kill(childPID, SIGCONT) == -1){
-                perror("Fail to wake process");
-            }
-            else {
-                fprintf(stdout, "Process %d was woken\n", childPID);
-            }
+            handleWake(pCmdLine);
         }
 
         else if (strcmp (pCmdLine->arguments[0],"term") == 0){
-            int childPID = atoi(pCmdLine->arguments[1]);
-            if (kill(childPID, SIGTERM) == -1){
-                perror("Fail to terminate process");
-            }
-            else {
-                fprintf(stdout, "Process %d was terminated\n", childPID);
-            }
+            handleTerm(pCmdLine);
         }
 
         else if (strcmp (pCmdLine->arguments[0],"cd") == 0){
-            printf("Changing directory to: ");
-            printf("%s ", pCmdLine->arguments[1]);
-            if (chdir(pCmdLine->arguments[1]) == -1){ //trying yto change directory of the shell
-                perror("Fail in chdir");
-            }
-            freeCmdLines(pCmdLine);
+            handleCD(pCmdLine);           
         }
     //end of terms
 
@@ -74,10 +112,13 @@ void execute(cmdLine *pCmdLine){
             //adding files:
             if (pCmdLine->inputRedirect != NULL){
                 printf("Input file: %s\n", pCmdLine->inputRedirect);
-                if (fopen(pCmdLine->inputRedirect, "r") == NULL){
+                FILE *inputFile = fopen(pCmdLine->inputRedirect, "r");
+                if (inputFile == NULL){
                     perror("Fail to open input file");
                     _exit(1);
                 }
+                dup2(fileno(inputFile), STDIN_FILENO); //to read from the file
+                fclose(inputFile);
             }
 
             if (pCmdLine->outputRedirect != NULL){
@@ -103,7 +144,7 @@ void execute(cmdLine *pCmdLine){
                 waitpid(PID, &status, 0); //waiting for the childPID to finish
                 }
 
-                }
+            }
         }
 
     //recieves a parsed line
